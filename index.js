@@ -128,11 +128,12 @@ const View = (() => {
         inventory.forEach((item) => {
             inventoryTemp += `
           <div class="inventory_item" id="${item.id}">
-              <p>${item.content}</p>
-              <button class="decrease_amount_btn" id="${item.id}">-</button>
+              <p class="inventory_name">${item.content}</p>
+              <button class="decrease_amount_btn inventory_btns" id="${item.id}"> - </button>
               <p > ${item.amount} </p>
-              <button class="increse_amount_btn" id="${item.id}">+</button>
-              <button class="add_to_cart_btn" id="${item.id}">Add to Cart</button>
+              <button class="increse_amount_btn inventory_btns" id="${item.id}"> + </button>
+              <button class="add_to_cart_btn inventory_btns" id="${item.id}">Add to Cart</button>
+              <span class="end_space"></span>
           </div>
           `;
         });
@@ -145,7 +146,8 @@ const View = (() => {
             cartTemp += `
           <div class="cart_item" id="${item.id}">
               <p>${item.content} x ${item.amount}</p>
-              <button class="delete_from_cart_btn" id="${item.id}">Delete</button>
+              <span class="bet_space"></span>
+              <button class="delete_from_cart_btn inventory_btns" id="${item.id}">Delete</button>
           </div>
           `;
         });
@@ -185,9 +187,9 @@ const Controller = ((model, view) => {
         view.inventoryListEl.addEventListener("click", (e) => {
             const element = e.target;
             let change = 0;
-            if (element.className === "increse_amount_btn") {
+            if (element.classList.contains("increse_amount_btn")) {
                 change = 1;
-            } else if (element.className === "decrease_amount_btn") {
+            } else if (element.classList.contains("decrease_amount_btn")) {
                 change = -1;
             } else {
                 return;
@@ -221,7 +223,7 @@ const Controller = ((model, view) => {
     const handleAddToCart = () => {
         view.inventoryListEl.addEventListener("click", (e) => {
             const element = e.target;
-            if (element.className === "add_to_cart_btn") {
+            if (element.classList.contains("add_to_cart_btn")) {
                 const id = parseInt(element.id);
                 const inv_item = state.inventory.find((item) => item.id === id);
                 if (inv_item == undefined) {
@@ -251,7 +253,7 @@ const Controller = ((model, view) => {
     const handleDeleteFromCart = () => {
         view.cartListEl.addEventListener("click", (e) => {
             const element = e.target;
-            if (element.className === "delete_from_cart_btn") {
+            if (element.classList.contains("delete_from_cart_btn")) {
                 const id = parseInt(element.id);
                 const cart_item = state.cart.find((item) => item.id === id);
                 if (cart_item) {
