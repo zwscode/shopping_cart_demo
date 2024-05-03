@@ -1,0 +1,29 @@
+#app {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	gap: 20px;
+}
+
+.inventory-container {
+	display: flex;
+	flex-direction: column;
+	width: 50%;
+}
+
+.inventory_item {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+
+}
+
+.cart-container {
+	width: 50%;
+}
+
+.cart_item {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}

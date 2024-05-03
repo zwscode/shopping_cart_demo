@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "json:server": "json-server --watch ./db/db.json",
-    "live-server":"live-server --ignore=./db/db.json .",
-    "start":"npm run json:server & npm run live-server"
+    "live-server": "live-server --ignore=./db/db.json .",
+    "start": "npm-run-all --parallel json:server live-server"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +15,8 @@
   "dependencies": {
     "json-server": "^0.17.3",
     "live-server": "^1.2.2"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
   }
 }
