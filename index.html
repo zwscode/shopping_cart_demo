@@ -5,16 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
-    <title>Document</title>
+    <title>Shopping Cart</title>
   </head>
   <body>
     <div id="app">
       <div class="inventory-container">
         <h1>Inventory</h1>
         <div class="inventory-list"></div>
+        <div class="inventory-btm">
+          <button class="inv-prev-btn inventory_btns">prev</button>
+          <p id="page-label"> Page: 1</p> 
+          <button class="inv-next-btn inventory_btns">next</button>
+        </div>
       </div>
       <div class="cart-container">
         <h1>Shopping Cart</h1>
+        <p id="loading-checkout-label">checkout is loading </p>
         <div class="cart-wrapper">
           <div class="cart-list"></div>
           <button class="checkout-btn">checkout</button>

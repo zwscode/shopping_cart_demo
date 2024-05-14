@@ -18,6 +18,16 @@ h1 {
 	width: 30%;
 }
 
+#page-label {
+	text-align: center;
+}
+
+.inventory-btm {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+}
+
 .inventory_item {
 	border-radius: 8px;
 	display: flex;
@@ -44,6 +54,14 @@ h1 {
 	padding: 12px 25px;
 	font-size: 18px;
 	border: none;
+}
+
+.inv-prev-btn {
+	background-color: #556ca9;
+}
+
+.inv-next-btn {
+	background-color: #556ca9;
 }
 
 .decrease_amount_btn {

@@ -1,3 +1,5 @@
+const ITEM_PER_PAGE = 5;
+
 const API = (() => {
     const URL = "http://localhost:3000";
     const getCart = () => {
@@ -62,8 +64,13 @@ const Model = (() => {
     class State {
         #onChangeCart;
         #onChangeInventory;
+        #onChangeInventoryPage;
+        #onChangeLoadingCheckout;
+
         #inventory;
         #cart;
+        #inventory_page;
+        #is_loading_checkout;
         constructor() {
             this.#inventory = [];
             this.#cart = [];
@@ -76,14 +83,40 @@ const Model = (() => {
             return this.#inventory;
         }
 
+        get inventory_page() {
+            return this.#inventory_page;
+        }
+
+        get is_loading_checkout() {
+            return this.#is_loading_checkout;
+        }
+
+        set is_loading_checkout(flag) {
+            this.#is_loading_checkout = flag;
+            if (this.#is_loading_checkout) {
+                this.#onChangeLoadingCheckout();
+            }
+        }
+
         set cart(newCart) {
             this.#cart = newCart;
-            this.#onChangeCart();
+            if (this.#onChangeCart) {
+                this.#onChangeCart();
+            }
         }
 
         set inventory(newInventory) {
             this.#inventory = newInventory;
-            this.#onChangeInventory();
+            if (this.#onChangeInventory) {
+                this.#onChangeInventory();
+            }
+        }
+
+        set inventory_page(page_idx) {
+            this.#inventory_page = page_idx;
+            if (this.#onChangeInventoryPage) {
+                this.#onChangeInventoryPage();
+            }
         }
 
         subscribeCart(cb) {
@@ -93,7 +126,16 @@ const Model = (() => {
         subscribeInventory(cb) {
             this.#onChangeInventory = cb;
         }
+
+        subscribeInventoryPage(cb) {
+            this.#onChangeInventoryPage = cb;
+        }
+
+        subscribeLoadingCheckout(cb) {
+            this.#onChangeLoadingCheckout = cb;
+        }
     }
+
     const {
         getCart,
         updateCart,
@@ -123,9 +165,44 @@ const View = (() => {
         return inventory_items.find((item) => item.id === id);
     };
 
-    const renderInventory = (inventory) => {
+    // pagination
+    const prev_page_btn = document.querySelector(".inv-prev-btn");
+    const page_label = document.querySelector("#page-label");
+    const next_page_btn = document.querySelector(".inv-next-btn");
+
+    // loading checkout
+
+    const loading_checkout_label = document.querySelector(
+        "#loading-checkout-label"
+    );
+
+    function setElmVisibile(elm, visible) {
+        if (visible) {
+            elm.style.visibility = "visible";
+        } else {
+            elm.style.visibility = "hidden";
+        }
+    }
+
+    function setElmDisplay(elm, visible) {
+        if (visible) {
+            elm.style.display = "block";
+        } else {
+            elm.style.display = "none";
+        }
+    }
+
+    const renderInventory = (page_idx, inventory) => {
         let inventoryTemp = "";
-        inventory.forEach((item) => {
+        const start_idx = page_idx * ITEM_PER_PAGE;
+        const end_idx = start_idx + ITEM_PER_PAGE;
+        for (let i = 0; i < inventory.length; i += 1) {
+            if (i < start_idx) {
+                continue;
+            } else if (i >= end_idx) {
+                break;
+            }
+            const item = inventory[i];
             inventoryTemp += `
           <div class="inventory_item" id="${item.id}">
               <p class="inventory_name">${item.content}</p>
@@ -136,11 +213,22 @@ const View = (() => {
               <span class="end_space"></span>
           </div>
           `;
-        });
+        }
         inventoryListEl.innerHTML = inventoryTemp;
+        // page label
+        const total_page = Math.ceil(inventory.length / ITEM_PER_PAGE);
+        page_label.innerText = `Page: ${page_idx + 1}/${total_page}`;
+        setElmVisibile(prev_page_btn, page_idx > 0);
+        setElmVisibile(next_page_btn, page_idx < total_page - 1);
     };
 
-    const renderCart = (cart) => {
+    const renderLoadingCheckout = (is_loading) => {
+        // show/hide loading element
+        console.log("renderLoadingcheckout" + is_loading);
+        setElmDisplay(loading_checkout_label, is_loading);
+    };
+
+    const renderCart = (cart, is_loading_checkout) => {
         let cartTemp = "";
         cart.forEach((item) => {
             cartTemp += `
@@ -152,15 +240,19 @@ const View = (() => {
           `;
         });
         cartListEl.innerHTML = cartTemp;
+        renderLoadingCheckout(is_loading_checkout);
     };
 
     return {
         findInventoryItem,
         renderInventory,
         renderCart,
+        renderLoadingCheckout,
         inventoryListEl,
         cartListEl,
         checkoutBtn,
+        prev_page_btn,
+        next_page_btn,
     };
 })();
 
@@ -169,6 +261,8 @@ const Controller = ((model, view) => {
     const state = new model.State();
 
     const init = () => {
+        state.is_loading_checkout = false;
+        state.inventory_page = 0;
         model.getInventory().then((data) => {
             const inv_data = data.map((item) => {
                 return {
@@ -183,6 +277,16 @@ const Controller = ((model, view) => {
             state.cart = data;
         });
     };
+
+    const handleInventoryPage = () => {
+        view.prev_page_btn.addEventListener("click", () => {
+            state.inventory_page = state.inventory_page - 1;
+        });
+        view.next_page_btn.addEventListener("click", () => {
+            state.inventory_page = state.inventory_page + 1;
+        });
+    };
+
     const handleUpdateAmount = () => {
         view.inventoryListEl.addEventListener("click", (e) => {
             const element = e.target;
@@ -272,8 +376,14 @@ const Controller = ((model, view) => {
 
     const handleCheckout = () => {
         view.checkoutBtn.addEventListener("click", () => {
-            model.checkout();
-            state.cart = [];
+            // show loading
+            state.is_loading_checkout = true;
+            // loading done
+            setTimeout(() => {
+                state.is_loading_checkout = false;
+                model.checkout();
+                state.cart = [];
+            }, 1000);
         });
     };
 
@@ -281,16 +391,26 @@ const Controller = ((model, view) => {
         init();
         state.subscribeCart(() => {
             // update cart view
-            view.renderCart(state.cart);
+            view.renderCart(state.cart, state.is_loading_checkout);
         });
         state.subscribeInventory(() => {
             // update inventory view
-            view.renderInventory(state.inventory);
+            view.renderInventory(state.inventory_page, state.inventory);
         });
+        state.subscribeInventoryPage(() => {
+            // update inventory view
+            view.renderInventory(state.inventory_page, state.inventory);
+        });
+
+        state.subscribeLoadingCheckout(() => {
+            view.renderLoadingCheckout(state.is_loading_checkout);
+        });
+
         handleUpdateAmount();
         handleAddToCart();
         handleDeleteFromCart();
         handleCheckout();
+        handleInventoryPage();
     };
     return {
         bootstrap,
